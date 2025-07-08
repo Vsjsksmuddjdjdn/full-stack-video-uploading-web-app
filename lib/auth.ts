@@ -10,11 +10,11 @@ export const authOptions: NextAuthOptions = {
       name: "Credentials",
       credentials: {
         email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "passsword" },
+        password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error("Missing email or passsword");
+          throw new Error("Missing email or password");
         }
 
         try {
@@ -27,7 +27,7 @@ export const authOptions: NextAuthOptions = {
 
           const isValid = await bcrypt.compare(
             credentials.password,
-            user.passsword
+            user.password
           );
 
           if (!isValid) {
