@@ -21,6 +21,7 @@ export async function connectToDatabase() {
     const opts = {
       bufferCommands: true,
       maxPoolSize: 10,
+      autoSelectFamily: false,
     };
 
     mongoose.connect(MONGODB_URI, opts).then(() => mongoose.connection);

@@ -20,15 +20,16 @@ const FileUpload = ({ onSuccess, onProgress, fileType }: FileUploadProps) => {
   const [error, setError] = useState<string | null>(null);
 
   //optional validation
-
   const validateFile = (file: File) => {
     if (fileType === "video") {
       if (!file.type.startsWith("video/")) {
         setError("Please upload a valid video file");
+        return false;
       }
     }
     if (file.size > 100 * 1024 * 1024) {
       setError("File size must be less than 100 MB");
+      return false;
     }
     return true;
   };
@@ -42,13 +43,23 @@ const FileUpload = ({ onSuccess, onProgress, fileType }: FileUploadProps) => {
     setError(null);
 
     try {
+      // Get authentication parameters from your API
       const authRes = await fetch("/api/auth/imagekit-auth");
+      if (!authRes.ok) {
+        throw new Error("Failed to get authentication parameters");
+      }
+      
       const auth = await authRes.json();
-
+      
+      if (!auth.signature || !auth.expire || !auth.token) {
+        throw new Error("Invalid authentication parameters");
+      }
+      
+      // Use the authentication parameters directly
       const res = await upload({
         file,
         fileName: file.name,
-        publicKey: process.env.NEXT_PUBLIC_PUBLIC_KEY!,
+        publicKey: auth.publicKey, // Use the public key from the API response
         signature: auth.signature,
         expire: auth.expire,
         token: auth.token,
@@ -58,11 +69,11 @@ const FileUpload = ({ onSuccess, onProgress, fileType }: FileUploadProps) => {
             onProgress(Math.round(percent))
           }
         },
-        
       });
       onSuccess(res)
-    } catch (error) {
-        console.error("Upload failed", error)
+    } catch (error: any) {
+        console.error("Upload failed", error);
+        setError(error.message || "Upload failed. Please try again.");
     } finally {
         setUploading(false)
     }
@@ -76,6 +87,7 @@ const FileUpload = ({ onSuccess, onProgress, fileType }: FileUploadProps) => {
         onChange={handleFileChange}
       />
       {uploading && <span>Loading....</span>}
+      {error && <div className="text-red-500 mt-2">{error}</div>}
     </>
   );
 };
